@@ -1,13 +1,38 @@
-use dotenv::dotenv;
-use std::env;
+use std::{env, io};
+
+use serenity::prelude::*;
+
+use tracing::Level;
+use tracing_subscriber::{layer::*, util::*};
+
+mod events;
+
+use events::Handler;
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
+    dotenv::dotenv().ok();
+
+    let _ = tracing::subscriber::set_global_default(
+        tracing_subscriber::FmtSubscriber::builder()
+            .with_max_level(Level::INFO)
+            .finish(),
+    );
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let intents = GatewayIntents::GUILD_MESSAGES
+        | GatewayIntents::GUILDS
+        | GatewayIntents::GUILD_MEMBERS
+        | GatewayIntents::DIRECT_MESSAGES
+        | GatewayIntents::non_privileged()
+        | GatewayIntents::MESSAGE_CONTENT;
 
-    if let Err(why) = bongwater::client(&token).await.start().await {
-        println!("Client error: {:?}", why);
+    let mut client = Client::builder(&token, intents)
+        .event_handler(Handler)
+        .await
+        .expect("err creating client");
+
+    if let Err(why) = client.start().await {
+        println!("Client error: {why:?}");
     }
 }
