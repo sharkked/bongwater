@@ -10,7 +10,7 @@ pub struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
-        message::on_message(ctx, msg).await;
+        message::on_message_create(ctx, msg).await;
     }
 
     async fn ready(&self, ctx: Context, _: Ready) {
@@ -22,14 +22,13 @@ impl EventHandler for Handler {
             if let Some(guild) = guild_id.to_guild_cached(&ctx.cache) {
                 let name = guild.name.clone();
                 let members = guild.member_count;
-                //.map_or("<unknown>".into(), |user| user.name.clone());
 
-                println!("- {name}\n  owner: @TODO\n  members:{members}");
+                println!("- {name}\n  members:{members}");
             }
         }
     }
 
-    async fn guild_create(&self, ctx: Context, guild: serenity::all::Guild, is_new: Option<bool>) {
+    async fn guild_create(&self, _ctx: Context, guild: serenity::all::Guild, is_new: Option<bool>) {
         if is_new == Some(true) {
             info!(
                 name: "guild_create",

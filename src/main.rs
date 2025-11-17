@@ -1,9 +1,7 @@
-use std::{env, io};
+use std::env;
 
 use serenity::prelude::*;
-
 use tracing::Level;
-use tracing_subscriber::{layer::*, util::*};
 
 mod events;
 
