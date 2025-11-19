@@ -14,11 +14,12 @@
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux"];
       perSystem = {
+        self',
         pkgs,
         system,
         ...
       }: let
-        rustc = (pkgs.rust-bin.stable.latest.default).override {
+        rustTarget = (pkgs.rust-bin.stable.latest.default).override {
           extensions = ["rust-src"];
         };
 
@@ -29,8 +30,8 @@
 
         mkRustPackage =
           (pkgs.makeRustPlatform {
-            inherit rustc;
-            cargo = rustc;
+            rustc = rustTarget;
+            cargo = rustTarget;
           }).buildRustPackage {
             inherit (cargoToml.package) name version;
             src = ./.;
@@ -43,10 +44,12 @@
           overlays = [(import inputs.rust-overlay)];
         };
 
-        packages.default = mkRustPackage;
+        packages.default = self'.packages.bongwater;
+
+        packages.bongwater = mkRustPackage;
 
         devShells.default = pkgs.mkShell {
-          nativeBuildInputs = buildDeps ++ devDeps ++ [rustc];
+          nativeBuildInputs = buildDeps ++ devDeps ++ [rustTarget];
           shellHook = ''
             export RUST_SRC_PATH=${pkgs.rustPlatform.rustLibSrc}
           '';
