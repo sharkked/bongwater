@@ -7,7 +7,7 @@
     };
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
-  outputs = {flake-parts, ...} @ inputs:
+  outputs = inputs @ {flake-parts, ...}:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux"];
       perSystem = {
