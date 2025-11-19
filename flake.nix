@@ -5,36 +5,49 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
-  outputs = {
-    nixpkgs,
-    rust-overlay,
-    ...
-  }: let
-    forAllSystems = function:
-      nixpkgs.lib.genAttrs [
-        "x86_64-linux"
-        "aarch64-linux"
-      ] (system:
-        function (import nixpkgs {
-          inherit system;
-          overlays = [(import rust-overlay)];
-        }));
-  in {
-    devShells = forAllSystems (pkgs: let
-      rust-profile = (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml).override {
-        extensions = ["rust-src"];
-      };
-    in {
-      default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [
-          git
-          rust-profile
-          openssl
-        ];
+  outputs = {flake-parts, ...} @ inputs:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = ["x86_64-linux"];
+      perSystem = {
+        pkgs,
+        system,
+        ...
+      }: let
+        rustc = (pkgs.rust-bin.stable.latest.default).override {
+          extensions = ["rust-src"];
+        };
 
-        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+        buildDeps = with pkgs; [pkg-config];
+        devDeps = with pkgs; [git];
+
+        cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+
+        mkRustPackage =
+          (pkgs.makeRustPlatform {
+            inherit rustc;
+            cargo = rustc;
+          }).buildRustPackage {
+            inherit (cargoToml.package) name version;
+            src = ./.;
+            cargoLock.lockFile = ./Cargo.lock;
+            nativeBuildInputs = buildDeps;
+          };
+      in {
+        _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = [(import inputs.rust-overlay)];
+        };
+
+        packages.default = mkRustPackage;
+
+        devShells.default = pkgs.mkShell {
+          nativeBuildInputs = buildDeps ++ devDeps ++ [rustc];
+          shellHook = ''
+            export RUST_SRC_PATH=${pkgs.rustPlatform.rustLibSrc}
+          '';
+        };
       };
-    });
-  };
+    };
 }

@@ -14,7 +14,7 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, ctx: Context, _: Ready) {
-        println!("Online in {} guilds!", ctx.cache.guilds().len());
+        println!("Online in {} guild(s)!", ctx.cache.guilds().len());
     }
 
     async fn cache_ready(&self, ctx: Context, guilds: Vec<serenity::all::GuildId>) {
