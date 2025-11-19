@@ -1,4 +1,6 @@
 {
+  description = "my lovely discord bot son that i hate";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay = {
@@ -7,6 +9,7 @@
     };
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
+
   outputs = inputs @ {flake-parts, ...}:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux"];
